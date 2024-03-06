@@ -1,0 +1,14 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ form_title }}</title>
+    <link rel="stylesheet" href="{% static 'css/forms.css' %}">
+</head>
+<body dir="rtl">
+    <h1>{{ form_title }}</h1>
+    <form method="post">
+        {% csrf_token %}  {{ form.as_p }}  <button type="submit">ذخیره</button>
+    </form>
+</body>
+</html>

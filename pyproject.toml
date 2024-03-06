@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "tehrandarman"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^5.0.2"
+django-admin-persian-fonts = "^0.2"
+psycopg2-binary = "^2.9.9"
+django-jalali-date = "^1.1.0"
+pytz = "^2024.1"
+ruff-lsp = "^0.0.53"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
