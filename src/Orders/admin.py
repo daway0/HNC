@@ -86,14 +86,12 @@ class CareContractAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
         "personnel_monthly_salary",
         "healthcare_franchise_amount",
         "client_payment_status",
-        "personnel_payment_status",
         "include_holidays",
     ]
     filter_horizontal = ["shift_days", "patients"]
     list_editable = ["healthcare_franchise_amount", "personnel_monthly_salary"]
     list_filter = [
         "client_payment_status",
-        "personnel_payment_status",
     ]
     autocomplete_fields = [
         "client",
@@ -168,7 +166,6 @@ class CareContractAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                 "fields": [
                     "personnel_monthly_salary",
                     "personnel_salary_payment_time",
-                    "personnel_payment_status",
                     "client_payment_status",
                     "healthcare_franchise_amount",
                 ],
@@ -326,7 +323,7 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
 
     def remove_client_payment_record(self, request, object_id, payment_id):
         order = Orders.models.Order.objects.get(id=object_id)
-        payment_record = Financial.models.IncomingPayment.objects.filter(id=payment_id)
+        payment_record = IncomingPayment.objects.filter(id=payment_id)
         if payment_record:
             payment_record.delete()
             order.refresh_order_payment_statuses()
@@ -360,7 +357,7 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                 data["order"] = order
 
                 try:
-                    Financial.models.IncomingPayment.objects.create(**data)
+                    IncomingPayment.objects.create(**data)
                     order.refresh_order_payment_statuses()
                     messages.add_message(
                         request,
@@ -391,7 +388,7 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
 
     def remove_personnel_payment_record(self, request, object_id, payment_id):
         order = Orders.models.Order.objects.get(id=object_id)
-        payment_record = Financial.models.OutgoingPayment.objects.filter(id=payment_id)
+        payment_record = OutgoingPayment.objects.filter(id=payment_id)
         if payment_record:
             payment_record.delete()
             order.refresh_order_payment_statuses()
@@ -425,7 +422,7 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                 data["order"] = order
 
                 try:
-                    Financial.models.OutgoingPayment.objects.create(**data)
+                    OutgoingPayment.objects.create(**data)
                     order.refresh_order_payment_statuses()
                     messages.add_message(
                         request,

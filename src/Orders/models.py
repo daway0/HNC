@@ -445,15 +445,7 @@ class CareContract(Referral):
     # READ ONLY (CHANGE BY ACTIONS )
     client_payment_status = m.CharField(
         max_length=4,
-        verbose_name="وضعیت تسفیه حساب کارفرما",
-        choices=PaymentStatusChoices.choices,
-        default=PaymentStatusChoices.NOT_PAID,
-    )
-
-    # READ ONLY (CHANGE BY ACTIONS )
-    personnel_payment_status = m.CharField(
-        max_length=4,
-        verbose_name="وضعیت تسفیه حساب پرسنل",
+        verbose_name="وضعیت تسویه حساب کارفرما",
         choices=PaymentStatusChoices.choices,
         default=PaymentStatusChoices.NOT_PAID,
     )
