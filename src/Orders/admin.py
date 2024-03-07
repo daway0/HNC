@@ -77,6 +77,14 @@ class ContractCommentAdmin(CommentAdmin):
     model = models.ContractComment
 
 
+@admin.register(models.ClientAddress)
+class ClientAddressAdmins(
+    admin.ModelAdmin, TextInputIntegerFieldModelAdminMixin
+):
+    list_display = ["client", "location_text"]
+    search_fields = ["client__first_name", "client__last_name", "location_text"]
+
+
 @admin.register(models.CareContract)
 class CareContractAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
     form = Orders.forms.CareContractForm
@@ -102,6 +110,7 @@ class CareContractAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
         "referral_client",
         "referral_other_healthcare",
         "personnel",
+        "service_location",
     ]
     search_fields = ["PersonnelCall", "ClientCall"]
     inlines = [

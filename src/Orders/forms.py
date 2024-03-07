@@ -153,3 +153,27 @@ class CareContractForm(forms.ModelForm):
         self._validate_contract_duration()
         self._validate_personnel_salary()
         self._validate_healthcare_franchise_amount()
+
+
+class OrderForm(forms.ModelForm):
+    class Meta:
+        model = m.Order
+        fields = [
+            "referral",
+            "referral_personnel",
+            "referral_client",
+            "referral_other_healthcare",
+            "client",
+            "service_location",
+            "patient_tag_specifications",
+            "accepted",
+            "done",
+            "assigned_personnel",
+            "order_status",
+            "client_payment_status",
+            "personnel_payment_status",
+            "discount",
+        ]
+
+    def clean(self):
+        super().clean()

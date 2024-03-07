@@ -167,38 +167,6 @@ class Order(Referral):
         default=PaymentStatusChoices.NOT_PAID,
         verbose_name="وضعیت پرداخت پرسنل",
     )
-
-    referral = m.ForeignKey(
-        CatalogCallReferral,
-        on_delete=m.CASCADE,
-        verbose_name="معرف",
-        null=True,
-        blank=True,
-    )
-
-    referral_personnel = m.ForeignKey(
-        Personnel,
-        on_delete=m.CASCADE,
-        verbose_name="همکار معرف",
-        null=True,
-        blank=True,
-        related_name="personnel_orders_referral",
-    )
-    referral_client = m.ForeignKey(
-        Client,
-        on_delete=m.CASCADE,
-        verbose_name="کارفرما معرف",
-        null=True,
-        blank=True,
-        related_name="client_orders_referral",
-    )
-    referral_other_healthcare = m.ForeignKey(
-        CatalogMedicalCenter,
-        on_delete=m.CASCADE,
-        verbose_name="مرکز همکار معرف",
-        null=True,
-        blank=True,
-    )
     discount = m.IntegerField(default=0, verbose_name="تخفیف", help_text="به تومان")
 
     class Meta:
