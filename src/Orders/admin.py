@@ -82,7 +82,11 @@ class ClientAddressAdmins(
     admin.ModelAdmin, TextInputIntegerFieldModelAdminMixin
 ):
     list_display = ["client", "location_text"]
-    search_fields = ["client__first_name", "client__last_name", "location_text"]
+    search_fields = [
+        "client__first_name",
+        "client__last_name",
+        "location_text",
+    ]
 
 
 @admin.register(models.CareContract)
@@ -216,6 +220,7 @@ class ClientAdmin(ModelAdmin):
 
 class OrderServiceAdmin(TabularInline, TextInputIntegerFieldModelAdminMixin):
     model = models.OrderService
+    form = Orders.forms.OrderServiceForm
     extra = 0
     autocomplete_fields = ["service"]
     classes = ["collapse"]
@@ -223,6 +228,7 @@ class OrderServiceAdmin(TabularInline, TextInputIntegerFieldModelAdminMixin):
 
 @admin.register(models.Order)
 class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
+    form = Orders.forms.OrderForm
     list_display = [
         "display_service_card",
         "assigned_personnel",
@@ -238,6 +244,7 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
         "referral_personnel",
         "referral_client",
         "referral_other_healthcare",
+        "service_location",
     ]
 
     fieldsets = [

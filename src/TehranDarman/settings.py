@@ -19,7 +19,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-6-numh(" "$)qw77c^#txq1rrwca7mxcp4%-zlj6dp1$xq=i^swa8"
+SECRET_KEY = (
+    "django-insecure-6-numh(" "$)qw77c^#txq1rrwca7mxcp4%-zlj6dp1$xq=i^swa8"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -99,13 +101,16 @@ AUTH_PASSWORD_VALIDATORS = [
         ".UserAttributeSimilarityValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation" ".MinimumLengthValidator",
+        "NAME": "django.contrib.auth.password_validation"
+        ".MinimumLengthValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation" ".CommonPasswordValidator",
+        "NAME": "django.contrib.auth.password_validation"
+        ".CommonPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation" ".NumericPasswordValidator",
+        "NAME": "django.contrib.auth.password_validation"
+        ".NumericPasswordValidator",
     },
 ]
 
@@ -130,56 +135,3 @@ STATIC_ROOT = "/statics/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# settings.py
-
-from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
-
-# from Personnel.models import Personnel
-
-# ct = Personnel._meta
-UNFOLD = {
-    "SITE_HEADER": "Tehran Darman",
-    "SITE_TITLE": "Tehran Darman",
-    "SITE_SYMBOL": "health_and_safety",
-    "COLORS": {
-        "primary": {
-            "50": "227 242 253",
-            "100": "187 222 251",
-            "200": "144 202 249",
-            "300": "100 181 246",
-            "400": "66 153 225",
-            "500": "33 150 243",
-            "600": "31 128 234",
-            "700": "28 106 209",
-            "800": "25 89 179",
-            "900": "22 73 149",
-            "950": "17 51 117",
-        },
-    },
-    "SIDEBAR": {
-        "show_search": True,
-        "show_all_applications": True,
-        "navigation": [
-            {
-                "title": _("Modules"),
-                "items": [
-                    # {
-                    #     "title": _("Calls"),
-                    #     "icon": "call",
-                    #     "link": reverse_lazy("admin:%s_%s_changelist" % (
-                    #             "Personnel", "personnel")),
-                    #     },
-                    {
-                        "title": _(" پرسنل"),
-                        "icon": "clinical_notes",
-                        "link": reverse_lazy(
-                            "admin:%s_%s_changelist" % ("Personnel", "personnel")
-                        ),
-                    }
-                ],
-            }
-        ],
-    },
-}
