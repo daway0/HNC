@@ -79,6 +79,7 @@ class ContractCommentAdmin(CommentAdmin):
 
 @admin.register(models.CareContract)
 class CareContractAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
+    form = Orders.forms.CareContractForm
     list_display = [
         "client_full_name",
         "personnel",
@@ -189,12 +190,18 @@ class ClientAdmin(ModelAdmin):
 
     @admin.display(description="تلفن همراه")
     def phone_number(self, obj):
-        return models.ClientPhoneNumber.objects.filter(client=obj).last().phone_number
+        return (
+            models.ClientPhoneNumber.objects.filter(client=obj)
+            .last()
+            .phone_number
+        )
 
     @admin.display(description="آدرس")
     def address(self, obj):
         return utils.beautify_string_cut(
-            models.ClientAddress.objects.filter(client=obj).last().location_text
+            models.ClientAddress.objects.filter(client=obj)
+            .last()
+            .location_text
         )
 
 
@@ -317,8 +324,11 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                 name="order_personnel_payment",
             ),
             path(
-                "<path:object_id>/personnel-payment/<int" ":payment_id>/remove/",
-                self.admin_site.admin_view(self.remove_personnel_payment_record),
+                "<path:object_id>/personnel-payment/<int"
+                ":payment_id>/remove/",
+                self.admin_site.admin_view(
+                    self.remove_personnel_payment_record
+                ),
                 name="order_personnel_payment_remove",
             ),
         ]
@@ -326,7 +336,9 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
 
     def remove_client_payment_record(self, request, object_id, payment_id):
         order = Orders.models.Order.objects.get(id=object_id)
-        payment_record = Financial.models.IncomingPayment.objects.filter(id=payment_id)
+        payment_record = Financial.models.IncomingPayment.objects.filter(
+            id=payment_id
+        )
         if payment_record:
             payment_record.delete()
             order.refresh_order_payment_statuses()
@@ -341,7 +353,9 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                 messages.WARNING,
                 message=fm.order_remove_client_payment_record_record_not_found,
             )
-        return redirect(reverse("admin:order_client_payment", args=(object_id,)))
+        return redirect(
+            reverse("admin:order_client_payment", args=(object_id,))
+        )
 
     def new_client_payment(self, request, object_id):
         order = Orders.models.Order.objects.get(id=object_id)
@@ -368,10 +382,14 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                         message=fm.order_success_client_payment,
                     )
                 except Exception as e:
-                    messages.add_message(request, messages.ERROR, message=e.__str__())
+                    messages.add_message(
+                        request, messages.ERROR, message=e.__str__()
+                    )
                 finally:
                     return redirect(
-                        reverse("admin:order_client_payment", args=(object_id,))
+                        reverse(
+                            "admin:order_client_payment", args=(object_id,)
+                        )
                     )
 
         form = Orders.forms.OrderClientPaymentForm(
@@ -387,11 +405,15 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
             order=order,
             payment_records=order.client_payment_records(),
         )
-        return TemplateResponse(request, "Orders/ClientNewPayment.html", context)
+        return TemplateResponse(
+            request, "Orders/ClientNewPayment.html", context
+        )
 
     def remove_personnel_payment_record(self, request, object_id, payment_id):
         order = Orders.models.Order.objects.get(id=object_id)
-        payment_record = Financial.models.OutgoingPayment.objects.filter(id=payment_id)
+        payment_record = Financial.models.OutgoingPayment.objects.filter(
+            id=payment_id
+        )
         if payment_record:
             payment_record.delete()
             order.refresh_order_payment_statuses()
@@ -406,7 +428,9 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                 messages.WARNING,
                 message=fm.order_remove_personnel_payment_record_not_found,
             )
-        return redirect(reverse("admin:order_personnel_payment", args=(object_id,)))
+        return redirect(
+            reverse("admin:order_personnel_payment", args=(object_id,))
+        )
 
     def new_personnel_payment(self, request, object_id):
         order = Orders.models.Order.objects.get(id=object_id)
@@ -433,10 +457,14 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                         message=fm.order_personnel_payment_success,
                     )
                 except Exception as e:
-                    messages.add_message(request, messages.ERROR, message=e.__str__())
+                    messages.add_message(
+                        request, messages.ERROR, message=e.__str__()
+                    )
                 finally:
                     return redirect(
-                        reverse("admin:order_personnel_payment", args=(object_id,))
+                        reverse(
+                            "admin:order_personnel_payment", args=(object_id,)
+                        )
                     )
 
         form = Orders.forms.OrderClientPaymentForm(
@@ -452,7 +480,9 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
             order=order,
             payment_records=order.personnel_payment_records(),
         )
-        return TemplateResponse(request, "Orders/PersonnelNewPayment.html", context)
+        return TemplateResponse(
+            request, "Orders/PersonnelNewPayment.html", context
+        )
 
     @admin.display(description="خدمت")
     def display_service_card(self, obj):
@@ -468,8 +498,12 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
 
     @admin.display(description="")
     def display_custom_actions(self, obj):
-        client_payment_link = reverse("admin:order_client_payment", args=[obj.id])
-        personnel_payment_link = reverse("admin:order_personnel_payment", args=[obj.id])
+        client_payment_link = reverse(
+            "admin:order_client_payment", args=[obj.id]
+        )
+        personnel_payment_link = reverse(
+            "admin:order_personnel_payment", args=[obj.id]
+        )
 
         return mark_safe(
             f"<a href={client_payment_link} target='blank'>پرداخت "
