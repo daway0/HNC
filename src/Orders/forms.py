@@ -52,6 +52,17 @@ def is_hour_valid(hour: int) -> bool:
         return False
 
 
+def validate_relations(cleaned_data: dict):
+    relationship_with_patient = cleaned_data.get("relationship_with_patient")
+    relationship_with_patient_note = cleaned_data.get(
+        "relationship_with_patient_note"
+    )
+    if relationship_with_patient and relationship_with_patient_note:
+        raise ValidationError(
+            ("در صورت ارائه نسبت با بیمار، احتیاج به نوشتن توضیحات نیست."),
+        )
+
+
 class CareContractForm(forms.ModelForm):
     class Meta:
         model = m.CareContract
@@ -81,18 +92,6 @@ class CareContractForm(forms.ModelForm):
             "personnel_payment_status",
         ]
 
-    def _validate_relations(self):
-        relationship_with_patient = self.cleaned_data.get(
-            "relationship_with_patient"
-        )
-        relationship_with_patient_note = self.cleaned_data.get(
-            "relationship_with_patient_note"
-        )
-        if relationship_with_patient and relationship_with_patient_note:
-            raise ValidationError(
-                ("در صورت ارائه نسبت با بیمار، احتیاج به نوشتن توضیحات نیست."),
-            )
-
     def _validate_shifts(self):
         shift_start = self.cleaned_data.get("shift_start")
         shift_end = self.cleaned_data.get("shift_end")
@@ -110,6 +109,9 @@ class CareContractForm(forms.ModelForm):
         end = self.cleaned_data.get("end")
         if not (start and end):
             return
+
+        if end < start:
+            raise invalid_duration_exception
 
         if start.day == 1:
             if not (end.day - start.day) >= 28:
@@ -148,7 +150,7 @@ class CareContractForm(forms.ModelForm):
 
     def clean(self):
         super().clean()
-        self._validate_relations()
+        validate_relations(self.cleaned_data)
         self._validate_shifts()
         self._validate_contract_duration()
         self._validate_personnel_salary()
@@ -175,5 +177,51 @@ class OrderForm(forms.ModelForm):
             "discount",
         ]
 
+    def _validate_discount(self):
+        if not (discount := self.cleaned_data.get("discount")):
+            return
+
+        if discount < 0:
+            raise ValidationError(
+                "مقدار تخفیف صحیح نمی‌باشد: %(value)r",
+                params={"value": discount},
+            )
+
+    def _validate_duration(self):
+        accepted = self.cleaned_data.get("accepted")
+        done = self.cleaned_data.get("done")
+        if not (accepted and done):
+            return
+
+        if accepted > done:
+            raise ValidationError(
+                "زمان اتمام عقب تر از زمان قبول درخواست است."
+            )
+
     def clean(self):
         super().clean()
+        validate_relations(self.cleaned_data)
+        self._validate_duration()
+
+
+class OrderServiceForm(forms.ModelForm):
+    class Meta:
+        model = m.OrderService
+        fields = [
+            "order",
+            "service",
+            "cost",
+        ]
+
+    def _validate_cost(self):
+        if not (cost := self.cleaned_data.get("cost")):
+            return
+
+        if cost < 0:
+            raise ValidationError(
+                "مقدار هزینه صحیح نمی‌باشد: %(v)r", params={"v": cost}
+            )
+
+    def clean(self):
+        super().clean()
+        self._validate_cost()

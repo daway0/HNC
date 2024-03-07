@@ -1,3 +1,6 @@
+from django.db import models as m
+from django.db.models import QuerySet, Sum
+
 from BasicInfo.models import (
     CatalogCallReferral,
     CatalogMedicalCenter,
@@ -7,11 +10,8 @@ from BasicInfo.models import (
     Person,
     WeekDay,
 )
-from django.db import models as m
-from django.db.models import QuerySet, Sum
 from Patients.models import Patient
 from Personnel.models import Personnel
-
 from utils import beautify_string_cut
 
 
@@ -54,6 +54,7 @@ class ClientAddress(m.Model):
     class Meta:
         verbose_name = "آدرس"
         verbose_name_plural = "آدرس ها"
+        ordering = ["client__first_name", "client__last_name"]
 
     def __str__(self):
         return f"{self.client.full_name} {self.location_text}"
@@ -167,7 +168,9 @@ class Order(Referral):
         default=PaymentStatusChoices.NOT_PAID,
         verbose_name="وضعیت پرداخت پرسنل",
     )
-    discount = m.IntegerField(default=0, verbose_name="تخفیف", help_text="به تومان")
+    discount = m.IntegerField(
+        default=0, verbose_name="تخفیف", help_text="به تومان"
+    )
 
     class Meta:
         verbose_name = "خدمت موردی"
@@ -179,7 +182,9 @@ class Order(Referral):
         order_services = OrderService.objects.filter(order=self)
         personnel_share = 0
         for order_service in order_services:
-            personnel_franchise = 100 - order_service.service.healthcare_franchise
+            personnel_franchise = (
+                100 - order_service.service.healthcare_franchise
+            )
             personnel_share += (order_service.cost * personnel_franchise) / 100
         return personnel_share
 
@@ -187,7 +192,9 @@ class Order(Referral):
     def total_order_cost(self):
         services = OrderService.objects.filter(order=self)
         if services:
-            return services.aggregate(total_order_cost=Sum("cost"))["total_order_cost"]
+            return services.aggregate(total_order_cost=Sum("cost"))[
+                "total_order_cost"
+            ]
         return 0
 
     @property
@@ -209,7 +216,9 @@ class Order(Referral):
     def client_remaining_payable(self):
         from Financial import models as FinancialModels
 
-        client_payments = FinancialModels.IncomingPayment.objects.filter(order=self)
+        client_payments = FinancialModels.IncomingPayment.objects.filter(
+            order=self
+        )
 
         if not client_payments:
             return self.total_order_cost_after_discount
@@ -224,7 +233,9 @@ class Order(Referral):
     def personnel_remaining_payable(self):
         from Financial import models as FinancialModels
 
-        personnel_payments = FinancialModels.OutgoingPayment.objects.filter(order=self)
+        personnel_payments = FinancialModels.OutgoingPayment.objects.filter(
+            order=self
+        )
 
         if not personnel_payments:
             return self.personnel_share
@@ -252,7 +263,10 @@ class Order(Referral):
     def _refresh_order_client_payment_status(self) -> None:
         if self.client_remaining_payable <= 0:
             self.client_payment_status = PaymentStatusChoices.COMPLETE_PAID
-        elif self.client_remaining_payable == self.total_order_cost_after_discount:
+        elif (
+            self.client_remaining_payable
+            == self.total_order_cost_after_discount
+        ):
             self.client_payment_status = PaymentStatusChoices.NOT_PAID
         else:
             self.client_payment_status = PaymentStatusChoices.PARTIAL_PAID
@@ -275,8 +289,12 @@ class Order(Referral):
 
 class OrderService(Junction):
     order = m.ForeignKey(Order, on_delete=m.CASCADE, verbose_name="خدمت موردی")
-    service = m.ForeignKey(CatalogService, on_delete=m.CASCADE, verbose_name="سرویس")
-    cost = m.IntegerField(default=0, verbose_name="هزینه", help_text="به تومان")
+    service = m.ForeignKey(
+        CatalogService, on_delete=m.CASCADE, verbose_name="سرویس"
+    )
+    cost = m.IntegerField(
+        default=0, verbose_name="هزینه", help_text="به تومان"
+    )
 
     created_at = m.DateTimeField(auto_now_add=True)
     updated_at = m.DateTimeField(auto_now=True)
@@ -345,8 +363,12 @@ class CareContract(Referral):
 
     shift_days = m.ManyToManyField(WeekDay, verbose_name="روز های شیفت")
 
-    shift_start = m.PositiveSmallIntegerField(default=8, verbose_name="ساعت شروع شیفت")
-    shift_end = m.PositiveSmallIntegerField(default=18, verbose_name="ساعت پایان شیفت")
+    shift_start = m.PositiveSmallIntegerField(
+        default=8, verbose_name="ساعت شروع شیفت"
+    )
+    shift_end = m.PositiveSmallIntegerField(
+        default=18, verbose_name="ساعت پایان شیفت"
+    )
 
     client = m.ForeignKey(Client, on_delete=m.CASCADE, verbose_name="کارفرما")
 
@@ -380,7 +402,9 @@ class CareContract(Referral):
     def duration_in_hours(self) -> int:
         return ...
 
-    personnel = m.ForeignKey(Personnel, on_delete=m.CASCADE, verbose_name="پرسنل")
+    personnel = m.ForeignKey(
+        Personnel, on_delete=m.CASCADE, verbose_name="پرسنل"
+    )
 
     include_holidays = m.BooleanField(
         default=True,
