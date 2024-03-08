@@ -1,12 +1,13 @@
 from django.db import models
+
 from BasicInfo.models import (
-    Junction,
-    Person,
     CatalogArea,
     CatalogPersonnelRole,
+    CatalogTagSpecification,
     CatalogTagSpecificationCategory,
     CatalogValuedSpecification,
-    CatalogTagSpecification,
+    Junction,
+    Person,
 )
 
 
@@ -23,7 +24,8 @@ class PersonnelValuedSpecification(models.Model):
     value = models.CharField(max_length=250, verbose_name="مقدار")
 
     class Meta:
-        pass
+        verbose_name = "ویژگی‌ مقداری"
+        verbose_name_plural = "ویژگی‌‌های مقداری"
 
 
 class Personnel(Person):

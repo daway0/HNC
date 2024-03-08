@@ -120,7 +120,7 @@ class CareContractForm(forms.ModelForm):
             if abs((end.day - start.day)) > 2:
                 raise invalid_duration_exception
 
-    def _validate_personnel_salary(self):
+    def clean_personnel_salary(self):
         if not (
             personnel_monthly_salary := self.cleaned_data.get(
                 "personnel_monthly_salary"
@@ -133,8 +133,9 @@ class CareContractForm(forms.ModelForm):
                 "مقدار دستمزد پرسنل صحیح نمی‌باشد: %(value)r",
                 params={"value": personnel_monthly_salary},
             )
+        return personnel_monthly_salary
 
-    def _validate_healthcare_franchise_amount(self):
+    def clean_healthcare_franchise_amount(self):
         if not (
             healthcare_franchise_amount := self.cleaned_data.get(
                 "healthcare_franchise_amount"
@@ -147,14 +148,13 @@ class CareContractForm(forms.ModelForm):
                 "مقدار دستمزد پرسنل صحیح نمی‌باشد: %(value)r",
                 params={"value": healthcare_franchise_amount},
             )
+        return healthcare_franchise_amount
 
     def clean(self):
         super().clean()
         validate_relations(self.cleaned_data)
         self._validate_shifts()
         self._validate_contract_duration()
-        self._validate_personnel_salary()
-        self._validate_healthcare_franchise_amount()
 
 
 class OrderForm(forms.ModelForm):
@@ -177,7 +177,7 @@ class OrderForm(forms.ModelForm):
             "discount",
         ]
 
-    def _validate_discount(self):
+    def clean_discount(self):
         if not (discount := self.cleaned_data.get("discount")):
             return
 
@@ -186,6 +186,7 @@ class OrderForm(forms.ModelForm):
                 "مقدار تخفیف صحیح نمی‌باشد: %(value)r",
                 params={"value": discount},
             )
+        return discount
 
     def _validate_duration(self):
         accepted = self.cleaned_data.get("accepted")
@@ -213,7 +214,7 @@ class OrderServiceForm(forms.ModelForm):
             "cost",
         ]
 
-    def _validate_cost(self):
+    def clean_cost(self):
         if not (cost := self.cleaned_data.get("cost")):
             return
 
@@ -221,7 +222,7 @@ class OrderServiceForm(forms.ModelForm):
             raise ValidationError(
                 "مقدار هزینه صحیح نمی‌باشد: %(v)r", params={"v": cost}
             )
+        return cost
 
     def clean(self):
         super().clean()
-        self._validate_cost()
