@@ -1,12 +1,11 @@
 from django.db import models
+
 from BasicInfo.models import (
-    Junction,
-    Person,
     CatalogArea,
     CatalogPersonnelRole,
-    CatalogTagSpecificationCategory,
-    CatalogValuedSpecification,
     CatalogTagSpecification,
+    CatalogValuedSpecification,
+    Person,
 )
 
 

@@ -1,3 +1,6 @@
+import common.utils as utils
+from BasicInfo.admin import CatalogAdmin
+from Calls.models import ClientCall, PersonnelCall
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin, TabularInline
 from django.contrib.admin.options import BaseModelAdmin
@@ -7,31 +10,19 @@ from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.safestring import mark_safe
-
-import Orders.forms
-import utils
-from BasicInfo.admin import CatalogAdmin
-from Calls.models import ClientCall, PersonnelCall
 from Financial.models import IncomingPayment, OutgoingPayment
 
 from . import farsi_messages as fm
-from . import models
+from . import forms as order_form
+from . import models as order_model
 
 
 class TextInputIntegerFieldModelAdminMixin(BaseModelAdmin):
+    """Override all Integer widget to text widget"""
+
     formfield_overrides = {
         django_main_models.IntegerField: {"widget": AdminTextInputWidget}
     }
-
-
-class ClientPhoneNumberAdmin(TabularInline):
-    model = models.ClientPhoneNumber
-    extra = 0
-
-
-class ClientAddressAdmin(TabularInline):
-    model = models.ClientAddress
-    extra = 0
 
 
 class ReadOnlyTabular(TabularInline):
@@ -39,6 +30,15 @@ class ReadOnlyTabular(TabularInline):
 
     def has_add_permission(self, request, obj):
         return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+class CommentAdminTabular(TabularInline):
+    extra = 0
+    classes = ["collapse"]
+    readonly_fields = ["created_at"]
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -60,24 +60,22 @@ class OutgoingPaymentInline(ReadOnlyTabular):
     model = OutgoingPayment
 
 
-class CommentAdmin(TabularInline):
+class OrderCommentAdmin(CommentAdminTabular):
+    model = order_model.OrderComment
+
+
+class ContractCommentAdmin(CommentAdminTabular):
+    model = order_model.ContractComment
+
+
+class OrderServiceAdmin(TabularInline, TextInputIntegerFieldModelAdminMixin):
+    model = order_model.OrderService
     extra = 0
+    autocomplete_fields = ["service"]
     classes = ["collapse"]
-    readonly_fields = ["created_at"]
-
-    def has_change_permission(self, request, obj=None):
-        return False
 
 
-class OrderCommentAdmin(CommentAdmin):
-    model = models.OrderComment
-
-
-class ContractCommentAdmin(CommentAdmin):
-    model = models.ContractComment
-
-
-@admin.register(models.CareContract)
+@admin.register(order_model.CareContract)
 class CareContractAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
     list_display = [
         "client_full_name",
@@ -178,31 +176,7 @@ class CareContractAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
         return "%s %s" % (obj.client.first_name, obj.client.last_name)
 
 
-@admin.register(models.Client)
-class ClientAdmin(ModelAdmin):
-    search_fields = ["first_name", "last_name"]
-    inlines = [ClientPhoneNumberAdmin, ClientAddressAdmin]
-    list_display = ["first_name", "last_name", "phone_number", "address"]
-
-    @admin.display(description="تلفن همراه")
-    def phone_number(self, obj):
-        return models.ClientPhoneNumber.objects.filter(client=obj).last().phone_number
-
-    @admin.display(description="آدرس")
-    def address(self, obj):
-        return utils.beautify_string_cut(
-            models.ClientAddress.objects.filter(client=obj).last().location_text
-        )
-
-
-class OrderServiceAdmin(TabularInline, TextInputIntegerFieldModelAdminMixin):
-    model = models.OrderService
-    extra = 0
-    autocomplete_fields = ["service"]
-    classes = ["collapse"]
-
-
-@admin.register(models.Order)
+@admin.register(order_model.Order)
 class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
     list_display = [
         "display_service_card",
@@ -314,15 +288,18 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                 name="order_personnel_payment",
             ),
             path(
-                "<path:object_id>/personnel-payment/<int" ":payment_id>/remove/",
-                self.admin_site.admin_view(self.remove_personnel_payment_record),
+                "<path:object_id>/personnel-payment/<int"
+                ":payment_id>/remove/",
+                self.admin_site.admin_view(
+                    self.remove_personnel_payment_record
+                ),
                 name="order_personnel_payment_remove",
             ),
         ]
         return my_urls + urls
 
     def remove_client_payment_record(self, request, object_id, payment_id):
-        order = Orders.models.Order.objects.get(id=object_id)
+        order = order_model.Order.objects.get(id=object_id)
         payment_record = IncomingPayment.objects.filter(id=payment_id)
         if payment_record:
             payment_record.delete()
@@ -338,12 +315,14 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                 messages.WARNING,
                 message=fm.order_remove_client_payment_record_record_not_found,
             )
-        return redirect(reverse("admin:order_client_payment", args=(object_id,)))
+        return redirect(
+            reverse("admin:order_client_payment", args=(object_id,))
+        )
 
     def new_client_payment(self, request, object_id):
-        order = Orders.models.Order.objects.get(id=object_id)
+        order = order_model.Order.objects.get(id=object_id)
         if request.method == "POST":
-            form = Orders.forms.OrderClientPaymentForm(request.POST)
+            form = order_form.OrderClientPaymentForm(request.POST)
             if form.is_valid():
                 data = utils.map_to_model_data(
                     form.cleaned_data,
@@ -365,13 +344,17 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                         message=fm.order_success_client_payment,
                     )
                 except Exception as e:
-                    messages.add_message(request, messages.ERROR, message=e.__str__())
+                    messages.add_message(
+                        request, messages.ERROR, message=e.__str__()
+                    )
                 finally:
                     return redirect(
-                        reverse("admin:order_client_payment", args=(object_id,))
+                        reverse(
+                            "admin:order_client_payment", args=(object_id,)
+                        )
                     )
 
-        form = Orders.forms.OrderClientPaymentForm(
+        form = order_form.OrderClientPaymentForm(
             initial=dict(
                 remaining_amount=order.client_remaining_payable,
                 new_payment_amount=order.client_remaining_payable,
@@ -384,10 +367,12 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
             order=order,
             payment_records=order.client_payment_records(),
         )
-        return TemplateResponse(request, "Orders/ClientNewPayment.html", context)
+        return TemplateResponse(
+            request, "Orders/ClientNewPayment.html", context
+        )
 
     def remove_personnel_payment_record(self, request, object_id, payment_id):
-        order = Orders.models.Order.objects.get(id=object_id)
+        order = order_model.Order.objects.get(id=object_id)
         payment_record = OutgoingPayment.objects.filter(id=payment_id)
         if payment_record:
             payment_record.delete()
@@ -403,12 +388,14 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                 messages.WARNING,
                 message=fm.order_remove_personnel_payment_record_not_found,
             )
-        return redirect(reverse("admin:order_personnel_payment", args=(object_id,)))
+        return redirect(
+            reverse("admin:order_personnel_payment", args=(object_id,))
+        )
 
     def new_personnel_payment(self, request, object_id):
-        order = Orders.models.Order.objects.get(id=object_id)
+        order = order_model.Order.objects.get(id=object_id)
         if request.method == "POST":
-            form = Orders.forms.OrderClientPaymentForm(request.POST)
+            form = order_form.OrderClientPaymentForm(request.POST)
             if form.is_valid():
                 data = utils.map_to_model_data(
                     form.cleaned_data,
@@ -430,26 +417,32 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
                         message=fm.order_personnel_payment_success,
                     )
                 except Exception as e:
-                    messages.add_message(request, messages.ERROR, message=e.__str__())
+                    messages.add_message(
+                        request, messages.ERROR, message=e.__str__()
+                    )
                 finally:
                     return redirect(
-                        reverse("admin:order_personnel_payment", args=(object_id,))
+                        reverse(
+                            "admin:order_personnel_payment", args=(object_id,)
+                        )
                     )
-
-        form = Orders.forms.OrderClientPaymentForm(
-            initial=dict(
-                remaining_amount=order.personnel_remaining_payable,
-                new_payment_amount=order.personnel_remaining_payable,
-                paid_at=utils.current_date_str(),
+        else:
+            form = order_form.OrderClientPaymentForm(
+                initial=dict(
+                    remaining_amount=order.personnel_remaining_payable,
+                    new_payment_amount=order.personnel_remaining_payable,
+                    paid_at=utils.current_date_str(),
+                )
             )
-        )
         context = dict(
             self.admin_site.each_context(request),
             form=form,
             order=order,
             payment_records=order.personnel_payment_records(),
         )
-        return TemplateResponse(request, "Orders/PersonnelNewPayment.html", context)
+        return TemplateResponse(
+            request, "Orders/PersonnelNewPayment.html", context
+        )
 
     @admin.display(description="خدمت")
     def display_service_card(self, obj):
@@ -465,8 +458,12 @@ class OrderAdmin(ModelAdmin, TextInputIntegerFieldModelAdminMixin):
 
     @admin.display(description="")
     def display_custom_actions(self, obj):
-        client_payment_link = reverse("admin:order_client_payment", args=[obj.id])
-        personnel_payment_link = reverse("admin:order_personnel_payment", args=[obj.id])
+        client_payment_link = reverse(
+            "admin:order_client_payment", args=[obj.id]
+        )
+        personnel_payment_link = reverse(
+            "admin:order_personnel_payment", args=[obj.id]
+        )
 
         return mark_safe(
             f"<a href={client_payment_link} target='blank'>پرداخت "

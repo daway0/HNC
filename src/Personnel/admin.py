@@ -1,17 +1,12 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin, TabularInline
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
+from jalali_date.admin import ModelAdminJalaliMixin
 
 import Personnel.models
+
 # Register your models here.
-
-from . import models
-
-
-
-
-admin.site.unregister(User)
-admin.site.unregister(Group)
+from . import forms, models
 
 
 class PersonnelValuedSpecificationAdmin(TabularInline):
@@ -21,13 +16,14 @@ class PersonnelValuedSpecificationAdmin(TabularInline):
 
 @admin.register(models.Personnel)
 class PersonnelAdmin(ModelAdmin):
+    form = forms.PersonnelForm
     list_display = [
         "first_name",
         "last_name",
         "role",
         "national_code",
-        "display_status"
-        ]
+        "display_status",
+    ]
     # fieldsets = [
     #     (
     #         "User Basic Information",
@@ -80,12 +76,11 @@ class PersonnelAdmin(ModelAdmin):
     inlines = [PersonnelValuedSpecificationAdmin]
 
     @admin.display(description="test")
-    def test(self):
-        ...
+    def test(self): ...
 
     @admin.display(
         description="Status",
-        )
+    )
     def display_status(self, instance):
         if instance.status:
             return instance.get_status_display()

@@ -1,4 +1,6 @@
 from django import forms
+from jalali_date.admin import AdminJalaliDateWidget
+from jalali_date.fields import JalaliDateField
 
 
 class OrderPaymentForm(forms.Form):
@@ -7,11 +9,9 @@ class OrderPaymentForm(forms.Form):
         required=False,
         label="قابل پرداخت",
     )
-    new_payment_amount = forms.IntegerField(
-        label="پرداختی جدید",
-    )
-    paid_at = forms.CharField(
-        label="تاریخ پرداخت",
+    new_payment_amount = forms.IntegerField(label="پرداختی جدید")
+    paid_at = JalaliDateField(
+        label="تاریخ پرداخت", widget=AdminJalaliDateWidget
     )
 
     description = forms.CharField(
@@ -22,21 +22,4 @@ class OrderPaymentForm(forms.Form):
 class OrderClientPaymentForm(OrderPaymentForm): ...
 
 
-class OrderPersonnelPaymentForm(OrderPaymentForm):
-    ...
-
-    # def clean(self):
-    #     if self.cleaned_data['new_payment_amount'] > self.cleaned_data['remaining_amount']:
-    #         raise ValidationError("یی")
-
-    # def clean_payment_amount(self):
-    #     if self.cleaned_data['payment_amount'] < 2:
-    #         raise ...
-
-    # def clean_email(self):
-    #     # Custom validation logic for email field
-    #     email = self.cleaned_data['email']
-    #     # Check for something specific in the email
-    #     if not email.endswith('@example.com'):
-    #         raise forms.ValidationError('Email must end with @example.com')
-    #     return email
+class OrderPersonnelPaymentForm(OrderPaymentForm): ...

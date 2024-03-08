@@ -7,12 +7,13 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-django = "^5.0.2"
 django-admin-persian-fonts = "^0.2"
 psycopg2-binary = "^2.9.9"
-django-jalali-date = "^1.1.0"
 pytz = "^2024.1"
 ruff-lsp = "^0.0.53"
+black = "^24.2.0"
+django = "5.0.3"
+django-jalali-date = "^1.1.0"
 
 
 [build-system]

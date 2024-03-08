@@ -2,8 +2,6 @@ from django.contrib import admin
 
 from . import models
 
-# Register your models here.
-
 
 class CallAdmin(admin.ModelAdmin):
     list_display = [
@@ -21,6 +19,7 @@ class CallAdmin(admin.ModelAdmin):
     list_display_links = [
         "order",
         "contract",
+        "status",
     ]
     search_fields = [
         "order__client__first_name",
@@ -65,6 +64,7 @@ class PersonnelCallAdmin(CallAdmin):
     ] + CallAdmin.search_fields
 
     list_display_links = ["personnel"] + CallAdmin.list_display_links
+    autocomplete_fields = ["personnel"] + CallAdmin.autocomplete_fields
 
     @admin.display(description="شماره تماس")
     def phone_number(self, obj):

@@ -1,58 +1,32 @@
 from django.db import models
 
 from BasicInfo.models import CatalogCallReason, CatalogCallReferral
+from common import field_choices
 from Orders.models import CareContract, Client, Order
 from Personnel.models import Personnel
-
-# OUT OF CODE (DB)
-# class ReasonChoices(models.TextChoices):
-#     CONSULTATION = "", ...
-#     SERVICE_FEEDBACK = ...
-#     ORDER = ...
-#     WRONG_NUMBER = ...
-#     RECRUITMENT = ...
-
-# class ReferralChoices(models.TextChoices):
-#     WEBSITE = ...
-#     FRIEND = ...
-#     AD1 = ...
-#     AGENCY = ...
-
-
-# Create your models here.
 
 
 class Call(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class CallTypeChoices(models.TextChoices):
-        INCOMING = "INC", "ورودی"
-        OUTGOING = "OUT", "خروجی"
-
     call_type = models.CharField(
         max_length=3,
-        choices=CallTypeChoices.choices,
-        default=CallTypeChoices.INCOMING,
+        choices=field_choices.CallTypeChoices.choices,
+        default=field_choices.CallTypeChoices.INCOMING,
         verbose_name="ورودی یا خروجی",
     )
 
-    class StatusChoices(models.TextChoices):
-        ANSWERED = "ANS", "پاسخ داده شده"
-        NOT_ANSWERED = "REJ", "رد شده"
-
     status = models.CharField(
         max_length=3,
-        choices=StatusChoices.choices,
-        default=StatusChoices.ANSWERED,
+        choices=field_choices.CallAnswerStatusChoices.choices,
+        default=field_choices.CallAnswerStatusChoices.ANSWERED,
         verbose_name="وضعیت پاسخ",
     )
 
     reason = models.ForeignKey(
         CatalogCallReason,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         verbose_name="علت تماس",
     )
 
@@ -70,6 +44,15 @@ class Call(models.Model):
         null=True,
         blank=True,
         verbose_name="قرارداد مربوطه",
+    )
+
+    note = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True,
+        verbose_name="یادداشت",
+        help_text="در صورتی که یادداشت برای تماس های مرتبط با یک سرویس ثبت شود"
+        "به صورت خودکار یادداشت به قسمت یادداشت(کامنت) های سرویس هم اضافه میشود",
     )
 
     class Meta:
@@ -96,7 +79,8 @@ class ClientCall(Call):
         null=True,
         blank=True,
         verbose_name="کارفرما",
-        help_text="برای جست جوی در شماره های تماس کارفرما از این فیلد " "استفاده کنید",
+        help_text="برای جست جوی در شماره های تماس کارفرما از این فیلد "
+        "استفاده کنید",
     )
 
     raw_phone_number = models.CharField(

@@ -1,13 +1,13 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-
-class Junction(models.Model):
-    pass
+from common import field_choices, fields, validators
 
 
 class Lookup(models.Model):
     title = models.CharField(max_length=50, verbose_name="عنوان")
     note = models.TextField(null=True, blank=True, verbose_name="یادداشت")
+    code = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return self.title
@@ -28,48 +28,11 @@ class CatalogCallReferral(Lookup):
         verbose_name_plural = "انواع معرف"
 
 
-class Person(models.Model):
-    first_name = models.CharField(max_length=50, verbose_name="نام")
-    last_name = models.CharField(max_length=50, verbose_name="نام خانوادگی")
-
-    class GenderChoices(models.TextChoices):
-        MALE = "M", "مرد"
-        FEMALE = "F", "زن"
-
-    gender = models.CharField(
-        max_length=1, choices=GenderChoices.choices, verbose_name="جنسیت"
-    )
-
-    national_code = models.CharField(
-        max_length=10, verbose_name="کد ملی", null=True, blank=True
-    )
-
-    birthdate = models.DateField(null=True, blank=True, verbose_name="تاریخ تولد")
-
-    class Meta:
-        abstract = True
-
-    @property
-    def full_name(self):
-        return f"{self.first_name} {self.last_name}"
-
-    def __str__(self):
-        return self.full_name
-
-
 class CatalogArea(Lookup):
-    class AreaChoices(models.TextChoices):
-        # mantaqe1, mantaqe2, ...
-        DISTRICT = "DIS", "منطقه"
-
-        # pasdaran, iranshahr
-        NEIGHBORHOOD = "NGB", "محله"
-
-        # SHOMAL, JONUB, SHARQ, QARB
-        AREA = "ARE", "محدوده"
-
     category = models.CharField(
-        choices=AreaChoices.choices, max_length=3, verbose_name="دسته بندی"
+        choices=field_choices.AreaChoices.choices,
+        max_length=3,
+        verbose_name="دسته بندی",
     )
 
     class Meta:
@@ -77,29 +40,36 @@ class CatalogArea(Lookup):
         verbose_name_plural = "محدوده های مکانی"
 
 
-class CatalogServiceCategory(Lookup):
-    parent = models.ForeignKey(
-        "self",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        verbose_name="دسته بندی",
-    )
-
-
 class CatalogService(Lookup):
     parent = models.ForeignKey(
-        "CatalogService", null=True, blank=True, on_delete=models.SET_NULL
+        "CatalogService",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="سرویس مادر",
+        help_text="در صورتی که سرویس جدید زیر مجموعه سرویس دیگری است این قسمت را پر کنید",
     )
-    category_tree = models.CharField(max_length=250, null=True, blank=True)
+
     healthcare_franchise = models.PositiveSmallIntegerField(
-        default=100, verbose_name="سهم مرکز"
+        default=70,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name="سهم مرکز",
+        help_text="به درصد است",
     )
-    base_price = models.IntegerField(default=0, verbose_name="قیمت پایه سرویس")
+    base_price = fields.ToomanField(default=0, verbose_name="قیمت پایه سرویس")
 
     class Meta:
         verbose_name = "سرویس"
         verbose_name_plural = "سرویس ها"
+
+    @property
+    def is_leaf(self):
+        qs = CatalogService.objects.filter(parent=self)
+        return not bool(qs)
+
+    def __str__(self):
+        parent_hirearchy = self.parent or ""
+        return f"{self.title} > {parent_hirearchy}"
 
 
 class CatalogPersonnelRole(Lookup):
@@ -114,13 +84,6 @@ class CatalogTagSpecificationCategory(Lookup):
         verbose_name_plural = "دسته بندی های ویژگی های تگ"
 
 
-class ForPartyTypeChoices(models.TextChoices):
-    PERSONNEL = "PRS", "پرسنل"
-    PATIENT = "PTN", "بیمار"
-    CLIENT = "CLI", "کارفرما"
-    COMMON = "CMN", "مشترک بین همه"
-
-
 class CatalogTagSpecification(Lookup):
     category = models.ForeignKey(
         "CatalogTagSpecificationCategory",
@@ -130,11 +93,13 @@ class CatalogTagSpecification(Lookup):
         verbose_name="دسته بندی",
     )
     for_who = models.CharField(
-        choices=ForPartyTypeChoices.choices, max_length=3, verbose_name="برای"
+        choices=field_choices.ForPartyTypeChoices.choices,
+        max_length=3,
+        verbose_name="قابل استفاده برای",
     )
 
     def __str__(self):
-        return f"{self.category} | {self.title}"
+        return f"{self.category or 'بدون دسته بندی'} | {self.title}"
 
     class Meta:
         verbose_name = "ویژگی (تگ)"
@@ -156,7 +121,9 @@ class CatalogValuedSpecification(Lookup):
         verbose_name="دسته بندی",
     )
     for_who = models.CharField(
-        choices=ForPartyTypeChoices.choices, max_length=3, verbose_name="برای"
+        choices=field_choices.ForPartyTypeChoices.choices,
+        max_length=3,
+        verbose_name="برای",
     )
 
     def __str__(self):
@@ -169,7 +136,11 @@ class CatalogValuedSpecification(Lookup):
 
 class CatalogMedicalCenter(Lookup):
     phone_number = models.CharField(
-        max_length=20, null=True, blank=True, verbose_name="شماره همراه"
+        max_length=20,
+        validators=[validators.telephone_number],
+        null=True,
+        blank=True,
+        verbose_name="شماره همراه",
     )
 
     class Meta:
@@ -181,3 +152,45 @@ class WeekDay(Lookup):
     class Meta:
         verbose_name = "روز هفته"
         verbose_name_plural = "روز های هفته"
+
+
+class Person(models.Model):
+    first_name = models.CharField(
+        max_length=50, validators=[validators.trim_string], verbose_name="نام"
+    )
+    last_name = models.CharField(
+        max_length=50,
+        validators=[validators.trim_string],
+        verbose_name="نام خانوادگی",
+    )
+
+    gender = models.CharField(
+        max_length=1,
+        choices=field_choices.GenderChoices.choices,
+        verbose_name="جنسیت",
+    )
+
+    national_code = models.CharField(
+        max_length=10,
+        validators=[
+            validators.national_code,
+            validators.blacklist_national_codes,
+        ],
+        verbose_name="کد ملی",
+        null=True,
+        blank=True,
+    )
+
+    birthdate = models.DateField(
+        null=True, blank=True, verbose_name="تاریخ تولد"
+    )
+
+    class Meta:
+        abstract = True
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
+    def __str__(self):
+        return self.full_name

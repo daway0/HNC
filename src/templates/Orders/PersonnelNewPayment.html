@@ -60,15 +60,28 @@
     </div>
     <div class="module">
         <h2 class="background-color:green">پرداخت جدید</h2>
-
         <form action="{% url 'admin:order_personnel_payment' order.id %}" method="post">
             {% csrf_token %}
+            {{ form.media }}
             <table style="width: 100%">
+                {% for non_field_error in form.non_field_errors %}
+                    <p class="errornote">
+                        {{ non_field_error }}
+                    </p> 
+                {% endfor %}
                 {% for field in form %}
 
                     <tr>
                         <th>{{ field.label }}</th>
-                        <td>{{ field }}</td>
+                        <td>
+                            {{ field }}
+                            {% for error in field.errors %}
+                                <ul class="help errorlist">
+                                    <li>{{ error }}</li>
+                                </ul>
+                            {% endfor %}
+                            
+                        </td>
                     </tr>
 
 

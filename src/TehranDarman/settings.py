@@ -12,19 +12,20 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-6-numh(" "$)qw77c^#txq1rrwca7mxcp4%-zlj6dp1$xq=i^swa8"
+SECRET_KEY = (
+    "django-insecure-6-numh(" "$)qw77c^#txq1rrwca7mxcp4%-zlj6dp1$xq=i^swa8"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "192.168.100.80"]
 
 # Application definition
 
@@ -41,7 +42,7 @@ INSTALLED_APPS = [
     # apps
     "BasicInfo",
     "Personnel",
-    "Patients",
+    "Customers",
     "Orders",
     "Calls",
     "Financial",
@@ -89,6 +90,31 @@ DATABASES = {
     }
 }
 
+JALALI_DATE_DEFAULTS = {
+    # if change it to true then all dates of the list_display will convert to the Jalali.
+    "LIST_DISPLAY_AUTO_CONVERT": True,
+    "Strftime": {
+        "date": "%y/%m/%d",
+        "datetime": "%H:%M:%S _ %y/%m/%d",
+    },
+    "Static": {
+        "js": [
+            # loading datepicker
+            "admin/js/django_jalali.min.js",
+            # OR
+            # 'admin/jquery.ui.datepicker.jalali/scripts/jquery.ui.core.js',
+            # 'admin/jquery.ui.datepicker.jalali/scripts/calendar.js',
+            # 'admin/jquery.ui.datepicker.jalali/scripts/jquery.ui.datepicker-cc.js',
+            # 'admin/jquery.ui.datepicker.jalali/scripts/jquery.ui.datepicker-cc-fa.js',
+            # 'admin/js/main.js',
+        ],
+        "css": {
+            "all": [
+                "admin/jquery.ui.datepicker.jalali/themes/base/jquery-ui.min.css",
+            ]
+        },
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -99,20 +125,23 @@ AUTH_PASSWORD_VALIDATORS = [
         ".UserAttributeSimilarityValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation" ".MinimumLengthValidator",
+        "NAME": "django.contrib.auth.password_validation"
+        ".MinimumLengthValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation" ".CommonPasswordValidator",
+        "NAME": "django.contrib.auth.password_validation"
+        ".CommonPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation" ".NumericPasswordValidator",
+        "NAME": "django.contrib.auth.password_validation"
+        ".NumericPasswordValidator",
     },
 ]
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = "fa-ir"
+LANGUAGE_CODE = "fa"
 
 TIME_ZONE = "UTC"
 
@@ -120,66 +149,20 @@ USE_I18N = True
 
 USE_TZ = True
 
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+
 STATIC_URL = "static/"
-STATIC_ROOT = "/statics/"
+# STATIC_ROOT = "static/"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# settings.py
-
-from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
-
-# from Personnel.models import Personnel
-
-# ct = Personnel._meta
-UNFOLD = {
-    "SITE_HEADER": "Tehran Darman",
-    "SITE_TITLE": "Tehran Darman",
-    "SITE_SYMBOL": "health_and_safety",
-    "COLORS": {
-        "primary": {
-            "50": "227 242 253",
-            "100": "187 222 251",
-            "200": "144 202 249",
-            "300": "100 181 246",
-            "400": "66 153 225",
-            "500": "33 150 243",
-            "600": "31 128 234",
-            "700": "28 106 209",
-            "800": "25 89 179",
-            "900": "22 73 149",
-            "950": "17 51 117",
-        },
-    },
-    "SIDEBAR": {
-        "show_search": True,
-        "show_all_applications": True,
-        "navigation": [
-            {
-                "title": _("Modules"),
-                "items": [
-                    # {
-                    #     "title": _("Calls"),
-                    #     "icon": "call",
-                    #     "link": reverse_lazy("admin:%s_%s_changelist" % (
-                    #             "Personnel", "personnel")),
-                    #     },
-                    {
-                        "title": _(" پرسنل"),
-                        "icon": "clinical_notes",
-                        "link": reverse_lazy(
-                            "admin:%s_%s_changelist" % ("Personnel", "personnel")
-                        ),
-                    }
-                ],
-            }
-        ],
-    },
-}
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
