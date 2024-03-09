@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from . import models
 
@@ -10,17 +12,13 @@ class CallAdmin(admin.ModelAdmin):
         "call_type",
         "status",
         "reason",
-        "order",
-        "contract",
+        "order_link",
+        "contract_link",
     ]
     list_filter = [
         "call_type",
         "status",
         "reason",
-    ]
-    list_display_links = [
-        "order",
-        "contract",
     ]
     search_fields = [
         "order__client__first_name",
@@ -31,6 +29,30 @@ class CallAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ["reason", "order", "contract"]
 
+    @admin.display(description="قرارداد مراقبت")
+    def contract_link(self, obj):
+        if not obj.contract:
+            return
+        app_label = obj.contract._meta.app_label
+        model = obj.contract._meta.model_name
+        url = reverse(
+            "admin:%s_%s_change" % (app_label, model),
+            args=[obj.contract.id],
+        )
+        return mark_safe(f"<a href='{url}'>{obj.contract}")
+
+    @admin.display(description="خدمت موردی")
+    def order_link(self, obj):
+        if not obj.order:
+            return
+        
+        app_label = obj.order._meta.app_label
+        model = obj.order._meta.model_name
+        url = reverse(
+            "admin_%s_%s_change" % (app_label, model), args=[obj.order.id]
+        )
+        return mark_safe(f"<a href='{url}'>{obj.order}")
+
 
 @admin.register(models.ClientCall)
 class ClientCallAdmin(CallAdmin):
@@ -40,8 +62,6 @@ class ClientCallAdmin(CallAdmin):
         "raw_phone_number",
         "referral",
     ] + CallAdmin.list_display
-
-    list_display_links = ["id"] + CallAdmin.list_display_links
 
     search_fields = [
         "client__first_name",
@@ -63,8 +83,6 @@ class PersonnelCallAdmin(CallAdmin):
         "personnel__first_name",
         "personnel__last_name",
     ] + CallAdmin.search_fields
-
-    list_display_links = ["personnel"] + CallAdmin.list_display_links
 
     @admin.display(description="شماره تماس")
     def phone_number(self, obj):
